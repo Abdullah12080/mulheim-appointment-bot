@@ -3,7 +3,7 @@ const fs = require("fs");
 
 async function checkAppointments() {
     const browser = await chromium.launch({
-        headless: false,
+        headless: true,
         slowMo: 300
     });
 
