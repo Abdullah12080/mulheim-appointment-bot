@@ -49,18 +49,52 @@ async function checkAppointments() {
             name: "Weiter"
         }).click();
 
-        // Wait for the appointment page to finish loading
+        // Wait for page to finish loading
         await page.waitForLoadState("networkidle");
 
-        // Read all text from the page
+        // Read all page text
         const pageText = await page.textContent("body");
 
-        // Check if the page says there are no appointments
+        // Check if there are no appointments
         const noAppointment =
             pageText.includes("Kein freier Termin verfügbar") ||
             pageText.includes("Keine Zeiten verfügbar");
 
         console.log("No appointment detected:", noAppointment);
+
+        // -------------------------
+        // Debug information
+        // -------------------------
+        console.log("Current URL:", page.url());
+        console.log("Page Title:", await page.title());
+
+        // If an appointment is detected, save everything
+        if (!noAppointment) {
+
+            console.log("⚠️ Possible appointment detected. Saving debug files...");
+
+            const timestamp = new Date()
+                .toISOString()
+                .replace(/:/g, "-")
+                .replace(/\..+/, "");
+
+            await page.screenshot({
+                path: `appointment-${timestamp}.png`,
+                fullPage: true
+            });
+
+            fs.writeFileSync(
+                `appointment-${timestamp}.html`,
+                await page.content()
+            );
+
+            fs.writeFileSync(
+                `appointment-${timestamp}.txt`,
+                pageText
+            );
+
+            console.log("✅ Debug files saved.");
+        }
 
         await browser.close();
 
@@ -74,13 +108,22 @@ async function checkAppointments() {
         console.error("Error:", error.message);
 
         try {
+
+            const timestamp = new Date()
+                .toISOString()
+                .replace(/:/g, "-")
+                .replace(/\..+/, "");
+
             await page.screenshot({
-                path: "error.png",
+                path: `error-${timestamp}.png`,
                 fullPage: true
             });
 
-            const html = await page.content();
-            fs.writeFileSync("error.html", html);
+            fs.writeFileSync(
+                `error-${timestamp}.html`,
+                await page.content()
+            );
+
         } catch (e) {
             console.error("Could not save debug files.");
         }
