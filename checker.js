@@ -49,29 +49,34 @@ async function checkAppointments() {
             name: "Weiter"
         }).click();
 
-        // Wait for page to finish loading
+        // Wait until page is fully loaded
         await page.waitForLoadState("networkidle");
 
-        // Read all page text
+        console.log("Current URL:", page.url());
+        console.log("Page Title:", await page.title());
+
+        // Read page text
         const pageText = await page.textContent("body");
 
-        // Check if there are no appointments
+        // Official "no appointments" message
         const noAppointment =
             pageText.includes("Kein freier Termin verfügbar") ||
             pageText.includes("Keine Zeiten verfügbar");
 
-        console.log("No appointment detected:", noAppointment);
+        // Count actual appointment buttons
+        const appointmentButtons = await page
+            .locator("form.suggestion_form button.suggest_btn[type='submit']")
+            .count();
 
-        // -------------------------
-        // Debug information
-        // -------------------------
-        console.log("Current URL:", page.url());
-        console.log("Page Title:", await page.title());
+        console.log("No appointment message:", noAppointment);
+        console.log("Appointment buttons found:", appointmentButtons);
 
-        // If an appointment is detected, save everything
-        if (!noAppointment) {
+        let available = false;
 
-            console.log("⚠️ Possible appointment detected. Saving debug files...");
+        if (appointmentButtons > 0) {
+
+            console.log("✅ Appointment found.");
+            available = true;
 
             const timestamp = new Date()
                 .toISOString()
@@ -93,14 +98,43 @@ async function checkAppointments() {
                 pageText
             );
 
-            console.log("✅ Debug files saved.");
+        } else if (noAppointment) {
+
+            console.log("❌ No appointments available.");
+            available = false;
+
+        } else {
+
+            console.log("⚠️ Unknown page detected.");
+
+            const timestamp = new Date()
+                .toISOString()
+                .replace(/:/g, "-")
+                .replace(/\..+/, "");
+
+            await page.screenshot({
+                path: `unknown-${timestamp}.png`,
+                fullPage: true
+            });
+
+            fs.writeFileSync(
+                `unknown-${timestamp}.html`,
+                await page.content()
+            );
+
+            fs.writeFileSync(
+                `unknown-${timestamp}.txt`,
+                pageText
+            );
+
+            available = false;
         }
 
         await browser.close();
 
         return {
             success: true,
-            available: !noAppointment
+            available
         };
 
     } catch (error) {
@@ -108,7 +142,6 @@ async function checkAppointments() {
         console.error("Error:", error.message);
 
         try {
-
             const timestamp = new Date()
                 .toISOString()
                 .replace(/:/g, "-")
@@ -122,6 +155,11 @@ async function checkAppointments() {
             fs.writeFileSync(
                 `error-${timestamp}.html`,
                 await page.content()
+            );
+
+            fs.writeFileSync(
+                `error-${timestamp}.txt`,
+                await page.textContent("body")
             );
 
         } catch (e) {
