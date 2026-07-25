@@ -3,3 +3,15 @@ node_modules/
 logs/
 error.html
 error.png
+# Generated appointment files
+appointment-*.html
+appointment-*.png
+appointment-*.txt
+
+error-*.html
+error-*.png
+error-*.txt
+
+unknown-*.html
+unknown-*.png
+unknown-*.txt
