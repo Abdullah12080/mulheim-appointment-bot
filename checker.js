@@ -1,5 +1,6 @@
 const { chromium } = require("playwright");
 const fs = require("fs");
+const path = require("path");
 
 async function checkAppointments() {
     const browser = await chromium.launch({
@@ -8,6 +9,20 @@ async function checkAppointments() {
     });
 
     const page = await browser.newPage();
+
+    // Create debug folders if they don't exist
+    const debugFolders = [
+        "debug",
+        "debug/appointments",
+        "debug/errors",
+        "debug/unknown"
+    ];
+
+    debugFolders.forEach(folder => {
+        if (!fs.existsSync(folder)) {
+            fs.mkdirSync(folder);
+        }
+    });
 
     try {
         await page.goto("https://terminvergabe.muelheim-ruhr.de/");
@@ -49,21 +64,17 @@ async function checkAppointments() {
             name: "Weiter"
         }).click();
 
-        // Wait until page is fully loaded
         await page.waitForLoadState("networkidle");
 
         console.log("Current URL:", page.url());
         console.log("Page Title:", await page.title());
 
-        // Read page text
         const pageText = await page.textContent("body");
 
-        // Official "no appointments" message
         const noAppointment =
             pageText.includes("Kein freier Termin verfügbar") ||
             pageText.includes("Keine Zeiten verfügbar");
 
-        // Count actual appointment buttons
         const appointmentButtons = await page
             .locator("form.suggestion_form button.suggest_btn[type='submit']")
             .count();
@@ -84,17 +95,29 @@ async function checkAppointments() {
                 .replace(/\..+/, "");
 
             await page.screenshot({
-                path: `appointment-${timestamp}.png`,
+                path: path.join(
+                    "debug",
+                    "appointments",
+                    `appointment-${timestamp}.png`
+                ),
                 fullPage: true
             });
 
             fs.writeFileSync(
-                `appointment-${timestamp}.html`,
+                path.join(
+                    "debug",
+                    "appointments",
+                    `appointment-${timestamp}.html`
+                ),
                 await page.content()
             );
 
             fs.writeFileSync(
-                `appointment-${timestamp}.txt`,
+                path.join(
+                    "debug",
+                    "appointments",
+                    `appointment-${timestamp}.txt`
+                ),
                 pageText
             );
 
@@ -113,17 +136,29 @@ async function checkAppointments() {
                 .replace(/\..+/, "");
 
             await page.screenshot({
-                path: `unknown-${timestamp}.png`,
+                path: path.join(
+                    "debug",
+                    "unknown",
+                    `unknown-${timestamp}.png`
+                ),
                 fullPage: true
             });
 
             fs.writeFileSync(
-                `unknown-${timestamp}.html`,
+                path.join(
+                    "debug",
+                    "unknown",
+                    `unknown-${timestamp}.html`
+                ),
                 await page.content()
             );
 
             fs.writeFileSync(
-                `unknown-${timestamp}.txt`,
+                path.join(
+                    "debug",
+                    "unknown",
+                    `unknown-${timestamp}.txt`
+                ),
                 pageText
             );
 
@@ -142,28 +177,43 @@ async function checkAppointments() {
         console.error("Error:", error.message);
 
         try {
+
             const timestamp = new Date()
                 .toISOString()
                 .replace(/:/g, "-")
                 .replace(/\..+/, "");
 
             await page.screenshot({
-                path: `error-${timestamp}.png`,
+                path: path.join(
+                    "debug",
+                    "errors",
+                    `error-${timestamp}.png`
+                ),
                 fullPage: true
             });
 
             fs.writeFileSync(
-                `error-${timestamp}.html`,
+                path.join(
+                    "debug",
+                    "errors",
+                    `error-${timestamp}.html`
+                ),
                 await page.content()
             );
 
             fs.writeFileSync(
-                `error-${timestamp}.txt`,
+                path.join(
+                    "debug",
+                    "errors",
+                    `error-${timestamp}.txt`
+                ),
                 await page.textContent("body")
             );
 
-        } catch (e) {
+        } catch {
+
             console.error("Could not save debug files.");
+
         }
 
         await browser.close();
