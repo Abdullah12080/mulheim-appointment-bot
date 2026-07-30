@@ -1,28 +1,20 @@
-# Mülheim Appointment Availability Bot
+# Mülheim Appointment Bot
 
-An automated appointment monitoring tool built with **Node.js** and **Playwright** that continuously checks the Mülheim an der Ruhr appointment booking portal for available appointments and sends instant notifications via **Telegram** when a slot becomes available.
+An automated appointment monitoring bot for the Mülheim appointment portal.
+
+The bot uses **Playwright** to periodically check for available appointments. When an appointment is detected, it captures debugging artifacts and immediately sends a Telegram notification.
 
 ---
 
 ## Features
 
-- Automated browser navigation using Playwright
-- Navigates through the complete booking workflow
-- Selects the required appointment category automatically
-- Detects appointment availability using DOM element inspection
-- Sends instant Telegram notifications
-- Prevents duplicate notifications
-- Saves debug logs, screenshots, and HTML files when unexpected pages or errors occur
-- Runs automatically at configurable intervals
-
----
-
-## Technologies Used
-
-- JavaScript (Node.js)
-- Playwright
-- Telegram Bot API
-- Git & GitHub
+- Automated appointment checking
+- Headless browser automation using Playwright
+- Telegram notifications
+- Automatic screenshot capture
+- HTML page dump for debugging
+- Error logging
+- Docker support
 
 ---
 
@@ -31,42 +23,76 @@ An automated appointment monitoring tool built with **Node.js** and **Playwright
 ```
 mulheim-appointment-bot/
 │
-├── checker.js          # Appointment checking logic
-├── index.js            # Main application loop
-├── telegram.js         # Telegram notification service
-├── config.js           # Configuration values
-├── logger.js           # Logging utilities
+├── src/
+│   ├── index.js
+│   ├── checker.js
+│   ├── config.js
+│   ├── logger.js
+│   └── telegram.js
+│
+├── data/
+│   ├── debug/
+│   │   ├── appointments/
+│   │   ├── errors/
+│   │   └── unknown/
+│   │
+│   └── logs/
+│       └── bot.log
+│
+├── Dockerfile
 ├── package.json
+├── package-lock.json
+├── .env
 ├── .gitignore
+├── .dockerignore
 └── README.md
 ```
 
 ---
 
-## How It Works
+## Debug Output
 
-1. Opens the Mülheim appointment website.
-2. Navigates through the appointment booking process.
-3. Selects the required service.
-4. Checks the appointment page for available booking slots.
-5. Sends a Telegram notification immediately when an appointment is detected.
-6. Continues checking at regular intervals.
+When the bot detects an appointment, it stores:
+
+- Screenshot
+- HTML source
+- Text summary
+
+Location:
+
+```
+data/debug/appointments/
+```
+
+If an unexpected error occurs:
+
+```
+data/debug/errors/
+```
+
+If the page cannot be classified:
+
+```
+data/debug/unknown/
+```
+
+Application logs are stored in:
+
+```
+data/logs/
+```
+
+---
+
+## Requirements
+
+- Node.js 22+
+- Docker Desktop
+- Playwright
 
 ---
 
 ## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/Abdullah12080/mulheim-appointment-bot.git
-```
-
-Navigate into the project:
-
-```bash
-cd mulheim-appointment-bot
-```
 
 Install dependencies:
 
@@ -82,64 +108,62 @@ npx playwright install
 
 ---
 
-## Configuration
-
-Create your own configuration in `config.js`.
-
-Example:
-
-```javascript
-module.exports = {
-  BOT_TOKEN: "YOUR_TELEGRAM_BOT_TOKEN",
-  CHAT_ID: "YOUR_CHAT_ID",
-};
-```
-
----
-
-## Running the Bot
+## Running Locally
 
 ```bash
-node index.js
+node src/index.js
 ```
 
 ---
 
-## Example Notification
+## Running with Docker
+
+Build the image:
+
+```bash
+docker build -t appointment-bot .
+```
+
+Run the container:
+
+```bash
+docker run appointment-bot
+```
+
+> **Note:** Runtime files (screenshots, HTML dumps, logs) are currently stored inside the Docker container. In a later version, these will be persisted using Docker volumes.
+
+---
+
+## Environment Variables
+
+Create a `.env` file containing the required configuration:
 
 ```
-🎉 Appointment Available!
-
-A new appointment has been detected on the Mülheim booking portal.
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
 ```
 
 ---
 
-## Skills Demonstrated
+## Tech Stack
 
-- Browser Automation
-- JavaScript & Node.js
+- Node.js
 - Playwright
-- DOM Manipulation
-- Asynchronous Programming
-- Error Handling
-- Logging & Debugging
-- API Integration (Telegram Bot API)
-- Git Version Control
+- Docker
+- Telegram Bot API
 
 ---
 
-## Future Improvements
+## Learning Goals
 
-- Automatic appointment booking
-- Appointment date and time extraction
-- Email notifications
-- Docker support
-- Web dashboard
-- Configurable appointment categories
+This project is being developed as part of a hands-on journey to learn:
 
----
-
-## Disclaimer
-
-This project is intended for educational purposes and personal automation. Users are responsible for complying with the terms and conditions of the appointment booking website.
+- Node.js
+- Browser Automation
+- Docker
+- Linux
+- Containers
+- Docker Volumes
+- Docker Networking
+- Docker Compose
+- Deployment
